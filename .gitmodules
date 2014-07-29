@@ -1,0 +1,3 @@
+[submodule "sfa-c"]
+	path = sfa-c
+	url = git@bitbucket.org:tychobismeijer/sfa-c.git
