@@ -6,7 +6,7 @@ from numpy.distutils.system_info import get_info
 
 setup(
     name='sfa',
-    version='0.1-dev',
+    version='0.2-dev',
     author='Tycho Bismeijer',
     author_email='t.bismeijer@nki.nl',
     packages=['sfa'],
