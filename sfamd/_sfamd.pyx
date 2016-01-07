@@ -1,24 +1,18 @@
 import numpy as np
+from itertools import chain, accumulate
 
-cimport sfamd.sfa
+cimport sfamd_c
 cimport numpy as np
 cimport cython
 cimport cython.view
 
+np_size_t = np.dtype('u' + str(sizeof(size_t)))
 
-size_t = np.dtype('u' + str(sizeof(size_t)))
+c_version = sfamd_c.sfamd_version.decode()
 
 cdef class Factorization:
-    """A factorization of a specific dataset.
-    Factorization(data, n_features_split, n_factors)
-        data: Array of data to factorize, feature of same datype should be
-            together.
-        n_features_split: Number of features per datatype, in same order as the
-            features in data.
-        n_factors: Maximum number of factors this factorization should make.
-    """
 
-    cdef sfamd.sfa.Factorization* f
+    cdef sfamd_c.sfamd_Factorization* f
     cdef double[::1, :] data
 
     def __cinit__ (self, double[::1, :] data, size_t[::1] n_features_split,
@@ -33,7 +27,7 @@ cdef class Factorization:
 
         self.data = data
 
-        self.f = sfamd.sfa.sfa_Factorization_alloc(
+        self.f = sfamd_c.sfamd_Factorization_alloc(
             n_features=n_features,
             n_factors=n_factors,
             n_samples=n_samples,
@@ -44,7 +38,7 @@ cdef class Factorization:
             raise MemoryError()
 
     def  __dealloc__(self):
-        sfamd.sfa.sfa_Factorization_free(self.f)
+        sfamd_c.sfamd_Factorization_free(self.f)
 
     property coefficients:
         def __get__(self):
@@ -74,20 +68,12 @@ cdef class Factorization:
         def __get__(self):
             return np.asarray(self.data)
 
-    cpdef sfa(self, double eps, int max_iter,
-              double[::1] lambdas):
-        """Perform factorization.
-
-        Args:
-            eps:    When smallest change in paramters is smaller than
-                eps, EM is assumed to be converged and stopped.
-            max_iter:  EM stops after max_iter, even when not converged.
-            lambas:     List of list of float, giving regularization parameters
-                per datatype.
-        """
+    cpdef sfa(self, double eps, int max_iter, double[::1] lambdas):
         cdef int n_iter = 0
         cdef double diff = 0
 
+        # Make a character array of 'e', to indicate elastic net
+        # regularization for every data type.
         cdef char[::1] regularization = cython.view.array(
                 shape=(self.f.n_datatypes,),
                 itemsize=sizeof(char),
@@ -95,11 +81,10 @@ cdef class Factorization:
         for i in range(self.f.n_datatypes):
             regularization[i] = b'e'
 
-
         with nogil:
-            ret = sfamd.sfa.sfa(self.f, eps, max_iter,
-                            <char *> &regularization[0],
-                            &lambdas[0], &n_iter, &diff)
+            ret = sfamd_c.sfamd(self.f, eps, max_iter,
+                                <char *> &regularization[0],
+                                &lambdas[0], &n_iter, &diff)
         if (ret != 0):
             raise Exception('SFA Error: ' + str(ret))
         return (n_iter, diff)
