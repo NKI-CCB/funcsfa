@@ -21,6 +21,8 @@ cdef class Factorization:
         cdef int n_features = data.shape[1]
         cdef int n_datatypes = n_features_split.shape[0]
 
+        n_features_split = np.copy(n_features_split)
+
         if sum(n_features_split) != n_features:
             raise ValueError("Total Number of features in n_features_split "
                              "should equal n_features")
@@ -42,23 +44,34 @@ cdef class Factorization:
 
     property coefficients:
         def __get__(self):
-            return np.asarray(<double[:self.f.n_factors, :self.f.n_features]>
-                              self.f.coefficients).T
+            res = (<double[:self.f.n_factors, :self.f.n_features]>
+                   self.f.coefficients)
+            res = np.asarray(res).T
+            np.set_array_base(res, self)
+            return res
 
     property factors:
         def __get__(self):
-            return np.asarray(<double[:self.f.n_samples, :self.f.n_factors]>
-                              self.f.factors).T
+            res = (<double[:self.f.n_samples, :self.f.n_factors]> 
+                   self.f.factors)
+            res = np.asarray(res).T
+            np.set_array_base(res, self)
+            return res
 
     property factors_cov:
         def __get__(self):
-            return np.asarray(<double[:self.f.n_factors, :self.f.n_factors]>
-                              self.f.factor_cov).T
+            res = (<double[:self.f.n_factors, :self.f.n_factors]>
+                   self.f.factor_cov)
+            res = np.asarray(res).T
+            np.set_array_base(res, self)
+            return res
 
     property residual_var:
         def __get__(self):
-            return np.asarray(<double[:self.f.n_features]>
-                              self.f.residual_var)
+            return <double[:self.f.n_features]> self.f.residual_var
+            res = np.asarray(res)
+            np.set_array_base(res, self)
+            return res
 
     property n_datatypes:
         def __get__(self):

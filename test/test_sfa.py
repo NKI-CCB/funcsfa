@@ -148,8 +148,16 @@ class TestSingleDatatypeReproduceRandom(unittest.TestCase):
         for c1, c2 in zip(coef1, coef2):
             np.testing.assert_allclose(c1, c2)
 
+    def test_init_fit_fit_consistent(self):
+        self.f.fit(self.data, self.n_factors, max_iter=0)
+        coef1 = self.f.coefficients
+        self.f.fit(self.data, self.n_factors, max_iter=0)
+        coef2 = self.f.coefficients
+        for c1, c2 in zip(coef1, coef2):
+            np.testing.assert_allclose(c1, c2)
+
     def test_init_array_data_matrix_consistent(self):
-        self.f.fit_transform(self.data, self.n_factors, max_iter=0)
+        self.f.fit(self.data, self.n_factors, max_iter=0)
         coef1 = self.f.coefficients
         self.f.fit(self.data.data, self.n_factors, max_iter=0)
         coef2 = self.f.coefficients
@@ -158,9 +166,9 @@ class TestSingleDatatypeReproduceRandom(unittest.TestCase):
 
     def test_fit_transform_consistent(self):
         n_factors = self.n_factors // 2
-        self.f.fit_transform(self.data, n_factors, max_iter=0)
+        self.f.fit_transform(self.data, n_factors, max_iter=5)
         coef1 = self.f.coefficients
-        self.f.fit(self.data, n_factors, max_iter=0)
+        self.f.fit(self.data, n_factors, max_iter=5)
         coef2 = self.f.coefficients
         for c1, c2 in zip(coef1, coef2):
             np.testing.assert_allclose(c1, c2)
