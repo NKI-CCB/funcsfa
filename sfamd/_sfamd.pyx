@@ -81,9 +81,19 @@ cdef class Factorization:
         def __get__(self):
             return np.asarray(self.data)
 
-    cpdef sfa(self, double eps, int max_iter, double[::1] lambdas):
+    cpdef sfa(self, double eps, int max_iter, double[::1] lambdas,
+              int do_monitor=False):
         cdef int n_iter = 0
         cdef double diff = 0
+        cdef sfamd_c.sfamd_Monitor *mon
+        cdef Monitor monitor
+
+        if (do_monitor):
+            monitor = Monitor(max_iter)
+            mon = monitor.mon
+        else:
+            monitor = None
+            mon = NULL
 
         # Make a character array of 'e', to indicate elastic net
         # regularization for every data type.
@@ -97,7 +107,42 @@ cdef class Factorization:
         with nogil:
             ret = sfamd_c.sfamd(self.f, eps, max_iter,
                                 <char *> &regularization[0],
-                                &lambdas[0], &n_iter, &diff)
+                                &lambdas[0], mon)
         if (ret != 0):
             raise Exception('SFA Error: ' + str(ret))
-        return (n_iter, diff)
+        return monitor
+
+cdef class Monitor:
+
+    cdef sfamd_c.sfamd_Monitor* mon
+
+    def __cinit__(self, int max_iter):
+        self.mon = sfamd_c.sfamd_Monitor_alloc(max_iter=max_iter)
+
+    def __dealloc__(self):
+        sfamd_c.sfamd_Monitor_free(self.mon)
+
+    property reconstruction_error:
+        def __get__(self):
+            res = (<double[:self.mon.n_iter+2]> self.mon.reconstruction_error)
+            res = np.asarray(res)
+            np.set_array_base(res, self)
+            return res
+
+    property max_diff_factors:
+        def __get__(self):
+            res = (<double[:self.mon.n_iter+2]> self.mon.max_diff_factors)
+            res = np.asarray(res)
+            np.set_array_base(res, self)
+            return res
+
+    property max_diff_coefficients:
+        def __get__(self):
+            res = (<double[:self.mon.n_iter+2]> self.mon.max_diff_coefficients)
+            res = np.asarray(res)
+            np.set_array_base(res, self)
+            return res
+
+    property n_iter:
+        def __get__(self):
+            return int(self.mon.n_iter)+1

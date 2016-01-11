@@ -58,11 +58,16 @@ class TestTwoDataTypes(unittest.TestCase):
         for d_name, d in self.data.items():
             with(self.subTest(data_name=d_name)):
                 f = Factorization(d, self.n_features_split, self.n_factors)
-                n_iter, diff = f.sfa(max_diff, max_iter, l)
-                assert(n_iter < max_iter+1)
-                assert(diff >= 0.0)
+                monitor = f.sfa(max_diff, max_iter, l, True)
+                assert(monitor.n_iter < max_iter+1)
+                assert(all([d >= 0.0
+                            for d in monitor.max_diff_factors[1:]]))
+                assert(all([d >= 0.0
+                       for d in monitor.max_diff_coefficients[1:]]))
+                diff = max([monitor.max_diff_factors[-1],
+                            monitor.max_diff_coefficients[-1]])
                 if (diff > max_diff):
-                    self.assertEqual(n_iter, max_iter)
+                    self.assertEqual(monitor.n_iter, max_iter)
                 self.assertEqual(np.byte_bounds(d), np.byte_bounds(f.data))
                 self.check_factorization_type_and_shape(f)
 
@@ -73,13 +78,15 @@ class TestTwoDataTypes(unittest.TestCase):
         for d_name, d in self.data.items():
             with(self.subTest(data_name=d_name)):
                 f = Factorization(d, self.n_features_split, self.n_factors)
-                n_iter, diff = f.sfa(max_diff, max_iter, l)
-                assert(n_iter < max_iter+1)
+                monitor = f.sfa(max_diff, max_iter, l, True)
+                assert(monitor.n_iter < max_iter+1)
+                diff = max([monitor.max_diff_factors[-1],
+                            monitor.max_diff_coefficients[-1]])
                 assert(diff >= 0.0)
                 if diff == 0.0:
                     assert d_name == 'zeros'
                 if (diff > max_diff):
-                    self.assertEqual(n_iter, max_iter)
+                    self.assertEqual(monitor.n_iter, max_iter)
                 self.assertEqual(np.byte_bounds(d), np.byte_bounds(f.data))
                 self.check_factorization_type_and_shape(f)
 
@@ -91,7 +98,7 @@ class TestTwoDataTypes(unittest.TestCase):
         d_name = 'factorized'
         d = self.data[d_name]
         f = Factorization(d, self.n_features_split, self.n_factors)
-        n_iter, diff = f.sfa(max_diff, max_iter, l)
+        f.sfa(max_diff, max_iter, l)
         self.assertEqual(np.byte_bounds(d), np.byte_bounds(f.data))
         self.check_factorization_type_and_shape(f)
         coef = f.coefficients * (1+l2)
@@ -105,9 +112,10 @@ class TestTwoDataTypes(unittest.TestCase):
         d_name = 'factorized'
         d = self.data[d_name]
         f = Factorization(d, self.n_features_split, self.n_factors)
-        n_iter, diff = f.sfa(max_diff, max_iter, l)
-        assert(n_iter < max_iter)
-        assert(diff < max_diff)
+        monitor = f.sfa(max_diff, max_iter, l, True)
+        assert(monitor.n_iter < max_iter)
+        assert(monitor.max_diff_factors[-1] < max_diff)
+        assert(monitor.max_diff_coefficients[-1] < max_diff)
         self.assertEqual(np.byte_bounds(d), np.byte_bounds(f.data))
         self.check_factorization_type_and_shape(f)
 
@@ -169,11 +177,13 @@ class TestThreeDataTypes(unittest.TestCase):
         for d_name, d in self.data.items():
             with(self.subTest(data_name=d_name)):
                 f = Factorization(d, self.n_features_split, self.n_factors)
-                n_iter, diff = f.sfa(max_diff, max_iter, l)
-                assert(n_iter < max_iter+1)
+                monitor = f.sfa(max_diff, max_iter, l, True)
+                diff = max([monitor.max_diff_factors[-1],
+                            monitor.max_diff_coefficients[-1]])
+                assert(monitor.n_iter < max_iter+1)
                 assert(diff >= 0.0)
                 if (diff > max_diff):
-                    self.assertEqual(n_iter, max_iter)
+                    self.assertEqual(monitor.n_iter, max_iter)
                 self.assertEqual(np.byte_bounds(d), np.byte_bounds(f.data))
                 self.check_factorization_type_and_shape(f)
 
@@ -185,13 +195,15 @@ class TestThreeDataTypes(unittest.TestCase):
         for d_name, d in self.data.items():
             with(self.subTest(data_name=d_name)):
                 f = Factorization(d, self.n_features_split, self.n_factors)
-                n_iter, diff = f.sfa(max_diff, max_iter, l)
-                assert(n_iter < max_iter+1)
+                monitor = f.sfa(max_diff, max_iter, l, True)
+                diff = max([monitor.max_diff_factors[-1],
+                            monitor.max_diff_coefficients[-1]])
+                assert(monitor.n_iter < max_iter+1)
                 assert(diff >= 0.0)
                 if diff == 0.0:
                     assert d_name == 'zeros'
                 if (diff > max_diff):
-                    self.assertEqual(n_iter, max_iter)
+                    self.assertEqual(monitor.n_iter, max_iter)
                 self.assertEqual(np.byte_bounds(d), np.byte_bounds(f.data))
                 self.check_factorization_type_and_shape(f)
 
@@ -203,7 +215,7 @@ class TestThreeDataTypes(unittest.TestCase):
         d_name = 'factorized'
         d = self.data[d_name]
         f = Factorization(d, self.n_features_split, self.n_factors)
-        n_iter, diff = f.sfa(max_diff, max_iter, l)
+        f.sfa(max_diff, max_iter, l)
         self.assertEqual(np.byte_bounds(d), np.byte_bounds(f.data))
         self.check_factorization_type_and_shape(f)
         coef = f.coefficients * (1+l2)
@@ -218,8 +230,9 @@ class TestThreeDataTypes(unittest.TestCase):
         d_name = 'factorized'
         d = self.data[d_name]
         f = Factorization(d, self.n_features_split, self.n_factors)
-        n_iter, diff = f.sfa(max_diff, max_iter, l)
-        assert(n_iter < max_iter)
-        assert(diff < max_diff)
+        monitor = f.sfa(max_diff, max_iter, l, True)
+        assert(monitor.n_iter < max_iter)
+        assert(monitor.max_diff_factors[-1] < max_diff)
+        assert(monitor.max_diff_coefficients[-1] < max_diff)
         self.assertEqual(np.byte_bounds(d), np.byte_bounds(f.data))
         self.check_factorization_type_and_shape(f)

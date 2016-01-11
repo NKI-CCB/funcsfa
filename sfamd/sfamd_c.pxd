@@ -20,6 +20,16 @@ cdef extern from "sfamd.h":
 
     void sfamd_Factorization_free(sfamd_Factorization *m)
 
+    ctypedef struct sfamd_Monitor:
+        int n_iter
+        double *reconstruction_error
+        double *max_diff_factors
+        double *max_diff_coefficients
+
+    sfamd_Monitor* sfamd_Monitor_alloc(int max_iter)
+
+    void sfamd_Monitor_free(sfamd_Monitor *mon)
+
     int sfamd(sfamd_Factorization *m, double eps, int max_iter,
         char regularizations[],
-        double *lambdas, int *n_iter_p, double *diff) nogil
+        double *lambdas, sfamd_Monitor *mon) nogil
