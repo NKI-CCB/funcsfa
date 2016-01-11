@@ -272,20 +272,20 @@ def _plot_convergence(m, title, filename):
     ax2 = fig.add_subplot(3, 1, 2)
     ax3 = fig.add_subplot(3, 1, 3)
 
-    ax1.plot(m.iteration, m.explained_variance, clip_on=True)
+    ax1.plot(m['iteration'], m['explained_variance'], clip_on=True)
     ax1.set_xlim(left=-1)
-    if np.max(m.explained_variance > 1):
+    if np.max(m['explained_variance']) > 1:
         ax1.set_ylim(top=1)
     ax1.set_xlabel('Iteration')
     ax1.set_ylabel('explained variance')
 
-    ax2.plot(m.iteration[1:], m.max_diff_factors[1:], clip_on=True)
+    ax2.plot(m['iteration'][1:], m['max_diff_factors'][1:], clip_on=True)
     ax2.set_xlim(left=-1)
     ax2.set_yscale('log')
     ax2.set_xlabel('Iteration')
     ax2.set_ylabel('Max diff (Factors)')
 
-    ax3.plot(m.iteration[1:], m.max_diff_coefficients[1:], clip_on=True)
+    ax3.plot(m['iteration'][1:], m['max_diff_coefficients'][1:], clip_on=True)
     ax3.set_xlim(left=-1)
     ax3.set_yscale('log')
     ax3.set_xlabel('Iteration')

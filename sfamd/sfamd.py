@@ -146,6 +146,7 @@ class SFA():
     def __init__(self):
         self._factorization = None
 
+    @staticmethod
     def _penalties_to_array(l1, l2, n_dt):
         """Converts inputs of l1 and l2 penalties in various formats to
         arrays.
@@ -253,4 +254,13 @@ class SFA():
     def monitored_fit(self, data, n_factors, l1=0, l2=0, max_iter=5000,
                       eps=1e-6):
         self.fit(data, n_factors, l1, l2, max_iter, eps, True)
-        return self.monitor
+        return self._monitor_as_dict()
+
+    def _monitor_as_dict(self):
+        mon = dict()
+        mon['iteration'] = list(self.monitor.iteration)
+        mon['max_diff_factors'] = list(self.monitor.max_diff_factors)
+        mon['max_diff_coefficients'] = list(self.monitor.max_diff_coefficients)
+        mon['reconstruction_error'] = list(self.monitor.reconstruction_error)
+        mon['explained_variance'] = list(self.monitor.explained_variance)
+        return mon
