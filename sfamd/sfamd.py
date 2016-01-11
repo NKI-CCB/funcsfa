@@ -178,7 +178,8 @@ class SFA():
         lambdas = np.array(list(chain(*zip(l1, l2))), dtype='f8')
         return lambdas
 
-    def fit(self, data, n_factors, l1=0, l2=0, max_iter=5000, eps=1e-6):
+    def fit(self, data, n_factors, l1=0, l2=0, max_iter=5000, eps=1e-6,
+            do_monitor=False):
         """Fit coefficients from data.
 
         Runs an EM algorithm to find the best fit.
@@ -211,7 +212,8 @@ class SFA():
         d = np.require(data.data, '=f8', 'F')
         nfs = np.asarray(data.dt_n_features, _sfamd.np_size_t)
         self._factorization = _sfamd.Factorization(d, nfs, n_factors)
-        self._factorization.sfa(eps, max_iter, lambdas)
+        self.monitor = self._factorization.sfa(eps, max_iter, lambdas,
+                                               do_monitor)
 
     @property
     def coefficients(self):
@@ -247,3 +249,8 @@ class SFA():
         eq1 = np.dot(Psi_inv_B, btbi)
         Z = np.dot(data.data, eq1)
         return Z
+
+    def monitored_fit(self, data, n_factors, l1=0, l2=0, max_iter=5000,
+                      eps=1e-6):
+        self.fit(data, n_factors, l1, l2, max_iter, eps, True)
+        return self.monitor

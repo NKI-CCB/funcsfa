@@ -265,59 +265,31 @@ class TestTwoDatatypesReproduceRandom(unittest.TestCase):
 
 
 def _plot_convergence(m, title, filename):
-    fig = plot.fig((7, 14))
+    fig = plot.fig((7, 7))
     fig.suptitle(title)
 
-    ax1 = fig.add_subplot(7, 1, 1)
-    ax2 = fig.add_subplot(7, 1, 2)
-    ax3 = fig.add_subplot(7, 1, 3)
-    ax4 = fig.add_subplot(7, 1, 4)
-    ax5 = fig.add_subplot(7, 1, 5)
-    ax6 = fig.add_subplot(7, 1, 6)
-    ax7 = fig.add_subplot(7, 1, 7)
+    ax1 = fig.add_subplot(3, 1, 1)
+    ax2 = fig.add_subplot(3, 1, 2)
+    ax3 = fig.add_subplot(3, 1, 3)
 
-    ax1.plot(m['iter'], m['error'], clip_on=True)
+    ax1.plot(m.iteration, m.explained_variance, clip_on=True)
     ax1.set_xlim(left=-1)
-    if np.max(m['error'] > 1):
+    if np.max(m.explained_variance > 1):
         ax1.set_ylim(top=1)
     ax1.set_xlabel('Iteration')
     ax1.set_ylabel('explained variance')
 
-    ax2.plot(m['iter'], np.log10(1e-20 + m['difference']), clip_on=True)
+    ax2.plot(m.iteration[1:], m.max_diff_factors[1:], clip_on=True)
     ax2.set_xlim(left=-1)
-    ax2.set_xlabel('iteration')
-    ax2.set_ylabel('improvement of ll')
+    ax2.set_yscale('log')
+    ax2.set_xlabel('Iteration')
+    ax2.set_ylabel('Max diff (Factors)')
 
-    B = m['B'].copy()
-    B[B > 7] = 7
-    B[B < -7] = -7
-    ax3.plot(m['iter'], B, clip_on=True)
+    ax3.plot(m.iteration[1:], m.max_diff_coefficients[1:], clip_on=True)
     ax3.set_xlim(left=-1)
-    ax3.set_xlabel('iteration')
-    ax3.set_ylim(-6, 6)
-    ax3.set_ylabel('B')
-
-    ax4.plot(m['iter'], m['Z'], clip_on=True)
-    ax4.set_xlim(left=-1)
-    ax4.set_ylim(-6, 6)
-    ax4.set_xlabel('iteration')
-    ax4.set_ylabel('Z')
-
-    ax5.plot(m['iter'], m['meanZ'], clip_on=True)
-    ax5.set_xlim(left=-1)
-    ax5.set_xlabel('iteration')
-    ax5.set_ylabel('mean Z\nper factor')
-
-    ax6.plot(m['iter'], m['Bsparsity'], clip_on=True)
-    ax6.set_xlim(left=-1)
-    ax6.set_xlabel('iteration')
-    ax6.set_ylabel('sparsity of B')
-
-    ax7.plot(m['iter'], m['ll'], clip_on=True)
-    ax7.set_xlim(left=-1)
-    ax7.set_ylim(min(m['ll'][1:, ...]), max(m['ll']))
-    ax7.set_xlabel('Iteration')
-    ax7.set_ylabel('log-likelihood')
+    ax3.set_yscale('log')
+    ax3.set_xlabel('Iteration')
+    ax3.set_ylabel('Max diff (Coefficients)')
 
     plot.save(fig, filename)
 

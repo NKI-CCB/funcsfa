@@ -35,7 +35,7 @@ cdef class Factorization:
             n_samples=n_samples,
             n_datatypes=n_datatypes,
             n_features_split=&n_features_split[0],
-            data=&self.data[0, 0])
+            data=&data[0, 0])
         if not self.f:
             raise MemoryError()
 
@@ -68,7 +68,7 @@ cdef class Factorization:
 
     property residual_var:
         def __get__(self):
-            return <double[:self.f.n_features]> self.f.residual_var
+            res = <double[:self.f.n_features]> self.f.residual_var
             res = np.asarray(res)
             np.set_array_base(res, self)
             return res
@@ -89,7 +89,9 @@ cdef class Factorization:
         cdef Monitor monitor
 
         if (do_monitor):
-            monitor = Monitor(max_iter)
+            X = np.asarray(self.data)
+            data_var = np.sum(X**2)
+            monitor = Monitor(max_iter, data_var)
             mon = monitor.mon
         else:
             monitor = None
@@ -115,9 +117,11 @@ cdef class Factorization:
 cdef class Monitor:
 
     cdef sfamd_c.sfamd_Monitor* mon
+    cdef double data_var
 
-    def __cinit__(self, int max_iter):
+    def __cinit__(self, int max_iter, double data_var):
         self.mon = sfamd_c.sfamd_Monitor_alloc(max_iter=max_iter)
+        self.data_var = data_var
 
     def __dealloc__(self):
         sfamd_c.sfamd_Monitor_free(self.mon)
@@ -127,6 +131,14 @@ cdef class Monitor:
             res = (<double[:self.mon.n_iter+2]> self.mon.reconstruction_error)
             res = np.asarray(res)
             np.set_array_base(res, self)
+            return res
+
+    property explained_variance:
+        def __get__(self):
+            res = (<double[:self.mon.n_iter+2]> self.mon.reconstruction_error)
+            res = np.asarray(res)
+            np.set_array_base(res, self)
+            res = 1 - (res / self.data_var)
             return res
 
     property max_diff_factors:
@@ -142,6 +154,10 @@ cdef class Monitor:
             res = np.asarray(res)
             np.set_array_base(res, self)
             return res
+
+    property iteration:
+        def __get__(self):
+            return list(range(-1, self.mon.n_iter+1))
 
     property n_iter:
         def __get__(self):
