@@ -7,7 +7,7 @@ from numpy.distutils.system_info import get_info
 
 setup(
     name='sfamd',
-    version='1.0.dev2',
+    version='1.0.dev6',
     description='Sparse Factor Analysis of Multiple Datatypes',
     author='Tycho Bismeijer',
     author_email='t.bismeijer@nki.nl',
