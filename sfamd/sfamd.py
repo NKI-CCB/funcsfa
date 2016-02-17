@@ -57,6 +57,10 @@ class DataMatrix():
         self.features = features
         self.weights = weights
 
+    @property
+    def dataW(self):
+        return self.data * self.weights
+
 
 class StackedDataMatrix(DataMatrix):
     """A `.DataMatrix` containing multiple data types.
@@ -114,7 +118,7 @@ class StackedDataMatrix(DataMatrix):
         self.slices = slices
         self.dt_n_features = dt_n_features
 
-    def dt(self, idx) -> np.ndarray:
+    def dt(self, idx, weighted=True) -> np.ndarray:
         """Index the data to get one datatype.
 
         Attributes:
@@ -125,7 +129,10 @@ class StackedDataMatrix(DataMatrix):
         """
         if isinstance(idx, str):
             idx = self.dt_names.index(idx)
-        return self.data[:, self.slices[idx]]
+        d = self.data[:, self.slices[idx]]
+        if weighted:
+            d = d * self.weights[:, self.slices[idx]]
+        return d
 
     @staticmethod
     def _compute_slices(feature_lengths):
@@ -210,7 +217,7 @@ class SFA():
                             "higher than the number of factors")
         lambdas = SFA._penalties_to_array(l1, l2, data.n_dt)
         self._data = data
-        d = np.require(data.data, '=f8', 'F')
+        d = np.require(data.dataW, '=f8', 'F')
         nfs = np.asarray(data.dt_n_features, _sfamd.np_size_t)
         self._factorization = _sfamd.Factorization(d, nfs, n_factors)
         self.monitor = self._factorization.sfa(eps, max_iter, lambdas,
@@ -227,7 +234,7 @@ class SFA():
         B = self._factorization.coefficients
         Z = self._factorization.factors
         rec = np.dot(B, Z)
-        err = np.sum((self._data.data.T - rec)**2, 0)
+        err = np.sum((self._data.dataW.T - rec)**2, 0)
         return float(np.mean(err))
 
     def fit_transform(self, data, n_factors, l1=0, l2=0, max_iter=5000,
@@ -248,7 +255,7 @@ class SFA():
         btb = (Psi_inv_B.T).dot(B)
         btbi = np.linalg.inv(btb + np.identity(btb.shape[0]))
         eq1 = np.dot(Psi_inv_B, btbi)
-        Z = np.dot(data.data, eq1)
+        Z = np.dot(data.dataW, eq1)
         return Z
 
     def monitored_fit(self, data, n_factors, l1=0, l2=0, max_iter=5000,

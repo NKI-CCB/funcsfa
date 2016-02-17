@@ -71,7 +71,7 @@ class TestInvalidInputs(unittest.TestCase):
 
         f.fit(self.data_one, self.n_factors, max_iter=10)
         f.transform(self.data_one)
-        f.transform(self.data_one.data)
+        f.transform(self.data_one)
         with self.assertRaises(Exception):
             f.transform(self.data_two)
         with self.assertRaises(Exception):
