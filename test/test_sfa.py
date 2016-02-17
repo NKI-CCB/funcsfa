@@ -107,7 +107,8 @@ class TestSingleDatatypeReproduceRandom(unittest.TestCase):
         Z_estimated = self.f.fit_transform(self.data, self.n_factors,
                                            max_iter=0)
         self.assertAlmostEqual(self.f.reconstruction_error, 0.0)
-        X_reconstructed = np.dot(Z_estimated, self.f.coefficients[0].T)
+        X_reconstructed = (np.dot(Z_estimated, self.f.coefficients[0].T) +
+                           np.mean(self.X, 0, keepdims=True))
         np.testing.assert_allclose(self.X, X_reconstructed)
 
     def test_init_full_factors_constraints(self):
@@ -135,7 +136,8 @@ class TestSingleDatatypeReproduceRandom(unittest.TestCase):
         n_factors = self.n_factors // 2
         max_error = np.sum(self.X ** 2) / self.n_samples
         Z_estimated = self.f.fit_transform(self.data, n_factors, max_iter=0)
-        X_reconstructed = np.dot(Z_estimated, self.f.coefficients[0].T)
+        X_reconstructed = (np.dot(Z_estimated, self.f.coefficients[0].T) +
+                           np.mean(self.X, 0, keepdims=True))
         err = np.sum((self.X - X_reconstructed) ** 2) / self.n_samples
         assert self.f.reconstruction_error / max_error < 0.5
         np.testing.assert_allclose(err, self.f.reconstruction_error)

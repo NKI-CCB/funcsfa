@@ -59,7 +59,9 @@ class DataMatrix():
 
     @property
     def dataW(self):
-        return self.data * self.weights
+        d = self.data * self.weights
+        d -= np.mean(d, 0, keepdims=True)
+        return d
 
 
 class StackedDataMatrix(DataMatrix):
@@ -132,6 +134,7 @@ class StackedDataMatrix(DataMatrix):
         d = self.data[:, self.slices[idx]]
         if weighted:
             d = d * self.weights[:, self.slices[idx]]
+            d -= np.mean(d, 0, keepdims=True)
         return d
 
     @staticmethod
