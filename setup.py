@@ -1,7 +1,8 @@
+import sys
 from setuptools import setup
 from setuptools.extension import Extension
-from Cython.Build import cythonize
 
+import numpy
 from numpy.distutils.system_info import get_info
 
 
@@ -18,14 +19,15 @@ setup(
         'Topic :: Scientific/Engineering :: Bio-Informatics',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
         'License :: Other/Proprietary License',
-        'Programming Language :: Python :: 3.4'
+        'Programming Language :: Python :: 3.5'
     ],
-    ext_modules=cythonize([Extension(
+    ext_modules=[Extension(
         'sfamd._sfamd',
         ['sfamd/_sfamd.pyx', 'sfa-c/src/sfamd.c', 'sfa-c/build/version.c'],
         libraries=(get_info('blas_opt')['libraries'] +
                    get_info('lapack_opt')['libraries'] +
-                   ['lapacke', 'm']),
-        include_dirs=['sfa-c/include'])]),
+                   ['m']),
+        include_dirs=['sfa-c/include', sys.prefix + '/include',
+                      numpy.get_include()])],
     packages=['sfamd']
 )
