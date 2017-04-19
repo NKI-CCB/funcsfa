@@ -27,7 +27,6 @@ setup(
         libraries=(get_info('blas_opt')['libraries'] +
                    get_info('lapack_opt')['libraries'] +
                    ['m']),
-        include_dirs=['sfa-c/include', sys.prefix + '/include',
-                      numpy.get_include()])],
+        include_dirs=['sfa-c/include', numpy.get_include()])],
     packages=['sfamd']
 )
