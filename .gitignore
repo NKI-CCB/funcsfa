@@ -3,4 +3,3 @@ build/
 dist/
 *.so
 *.egg-info
-sfamd/*.c
