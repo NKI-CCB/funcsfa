@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-import plot
+from . import plot
 import sfamd
 
 
