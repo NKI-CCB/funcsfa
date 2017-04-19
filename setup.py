@@ -1,4 +1,3 @@
-import sys
 from setuptools import setup
 from setuptools.extension import Extension
 
@@ -8,7 +7,7 @@ from numpy.distutils.system_info import get_info
 
 setup(
     name='sfamd',
-    version='1.0.dev11',
+    version='1.0.dev12',
     description='Sparse Factor Analysis of Multiple Datatypes',
     author='Tycho Bismeijer',
     author_email='t.bismeijer@nki.nl',
