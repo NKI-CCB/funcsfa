@@ -1,18 +1,19 @@
 import numpy as np
 from itertools import chain, accumulate
 
-cimport sfamd_c
 cimport numpy as np
 cimport cython
-cimport cython.view
+from cython.view cimport array as cvarray
+
+from funcsfa cimport funcsfa_c
 
 np_size_t = np.dtype('u' + str(sizeof(size_t)))
 
-c_version = sfamd_c.sfamd_version.decode()
+c_version = funcsfa_c.funcsfa_version.decode()
 
 cdef class Factorization:
 
-    cdef sfamd_c.sfamd_Factorization* f
+    cdef funcsfa_c.funcsfa_Factorization* f
     cdef double[::1, :] data
 
     def __cinit__ (self, double[::1, :] data, size_t[::1] n_features_split,
@@ -29,7 +30,7 @@ cdef class Factorization:
 
         self.data = data
 
-        self.f = sfamd_c.sfamd_Factorization_alloc(
+        self.f = funcsfa_c.funcsfa_Factorization_alloc(
             n_features=n_features,
             n_factors=n_factors,
             n_samples=n_samples,
@@ -40,7 +41,7 @@ cdef class Factorization:
             raise MemoryError()
 
     def  __dealloc__(self):
-        sfamd_c.sfamd_Factorization_free(self.f)
+        funcsfa_c.funcsfa_Factorization_free(self.f)
 
     property coefficients:
         def __get__(self):
@@ -81,11 +82,11 @@ cdef class Factorization:
         def __get__(self):
             return np.asarray(self.data)
 
-    cpdef sfa(self, double eps, int max_iter, double[::1] lambdas,
+    def sfa(self, double eps, int max_iter, double[::1] lambdas,
               int do_monitor=False):
         cdef int n_iter = 0
         cdef double diff = 0
-        cdef sfamd_c.sfamd_Monitor *mon
+        cdef funcsfa_c.funcsfa_Monitor *mon
         cdef Monitor monitor
 
         if (do_monitor):
@@ -99,7 +100,7 @@ cdef class Factorization:
 
         # Make a character array of 'e', to indicate elastic net
         # regularization for every data type.
-        cdef char[::1] regularization = cython.view.array(
+        cdef char[::1] regularization = cvarray(
                 shape=(self.f.n_datatypes,),
                 itemsize=sizeof(char),
                 format='c')
@@ -107,7 +108,7 @@ cdef class Factorization:
             regularization[i] = b'e'
 
         with nogil:
-            ret = sfamd_c.sfamd(self.f, eps, max_iter,
+            ret = funcsfa_c.funcsfa(self.f, eps, max_iter,
                                 <char *> &regularization[0],
                                 &lambdas[0], mon)
         if (ret != 0):
@@ -116,15 +117,15 @@ cdef class Factorization:
 
 cdef class Monitor:
 
-    cdef sfamd_c.sfamd_Monitor* mon
+    cdef funcsfa_c.funcsfa_Monitor* mon
     cdef double data_var
 
     def __cinit__(self, int max_iter, double data_var):
-        self.mon = sfamd_c.sfamd_Monitor_alloc(max_iter=max_iter)
+        self.mon = funcsfa_c.funcsfa_Monitor_alloc(max_iter=max_iter)
         self.data_var = data_var
 
     def __dealloc__(self):
-        sfamd_c.sfamd_Monitor_free(self.mon)
+        funcsfa_c.funcsfa_Monitor_free(self.mon)
 
     property reconstruction_error:
         def __get__(self):

@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 from . import plot
-import sfamd
+import funcsfa
 
 
 class TestInvalidInputs(unittest.TestCase):
@@ -11,15 +11,15 @@ class TestInvalidInputs(unittest.TestCase):
     def setUp(self):
         self.rand = np.random.RandomState(1968486074)
         self.n_factors = 9
-        self.f = sfamd.SFA()
+        self.f = funcsfa.SFA()
         self.n_samples = 221
         self.n_features = 37
         self.X_a = self.rand.normal(0, 1, (self.n_samples, 30))
         self.X_b = self.rand.normal(0, 1, (self.n_samples, 7))
-        self.data_one = sfamd.DataMatrix(self.X_a)
-        self.data_two = sfamd.StackedDataMatrix([
-            sfamd.DataMatrix(self.X_a),
-            sfamd.DataMatrix(self.X_b)])
+        self.data_one = funcsfa.DataMatrix(self.X_a)
+        self.data_two = funcsfa.StackedDataMatrix([
+            funcsfa.DataMatrix(self.X_a),
+            funcsfa.DataMatrix(self.X_b)])
 
     def test_l1_penalty_length_one_dt(self):
         self.f.fit(self.data_one, self.n_factors, max_iter=0, l1=0.0)
@@ -64,7 +64,7 @@ class TestInvalidInputs(unittest.TestCase):
                        max_iter=0)
 
     def test_invalid_transform(self):
-        f = sfamd.SFA()
+        f = funcsfa.SFA()
 
         with self.assertRaises(Exception):
             f.transform(self.data_one)
@@ -91,8 +91,8 @@ class TestSingleDatatypeReproduceRandom(unittest.TestCase):
         self.Z = self.rand.normal(0, np.sqrt(Zvar),
                                   (self.n_samples, self.n_factors))
         self.X = np.dot(self.Z, self.B.T)
-        self.data = sfamd.DataMatrix(self.X)
-        self.f = sfamd.SFA()
+        self.data = funcsfa.DataMatrix(self.X)
+        self.f = funcsfa.SFA()
 
     def test_init_full_factors_output_shapes(self):
         Z_estimated = self.f.fit_transform(self.data, self.n_factors,
@@ -191,10 +191,10 @@ class TestTwoDatatypesReproduceRandom(unittest.TestCase):
         Zvar = Zvar / np.mean(Zvar)
         self.Z = self.rand.normal(0, np.sqrt(Zvar),
                                   (self.n_samples, self.n_factors))
-        self.data = sfamd.StackedDataMatrix([
-            sfamd.DataMatrix(np.dot(self.Z, self.B_a.T)),
-            sfamd.DataMatrix(np.dot(self.Z, self.B_b.T))])
-        self.f = sfamd.SFA()
+        self.data = funcsfa.StackedDataMatrix([
+            funcsfa.DataMatrix(np.dot(self.Z, self.B_a.T)),
+            funcsfa.DataMatrix(np.dot(self.Z, self.B_b.T))])
+        self.f = funcsfa.SFA()
 
     def test_init_full_factors_output_shapes(self):
         Z_estimated = self.f.fit_transform(self.data, self.n_factors,
@@ -310,10 +310,10 @@ class TestFunctionalNonSparse(unittest.TestCase):
         Zvar = Zvar / np.mean(Zvar)
         self.Z = self.rand.normal(0, np.sqrt(Zvar),
                                   (self.n_samples, self.n_factors))
-        self.data = sfamd.StackedDataMatrix([
-            sfamd.DataMatrix(np.dot(self.Z, self.B_a.T)),
-            sfamd.DataMatrix(np.dot(self.Z, self.B_b.T))])
-        self.f = sfamd.SFA()
+        self.data = funcsfa.StackedDataMatrix([
+            funcsfa.DataMatrix(np.dot(self.Z, self.B_a.T)),
+            funcsfa.DataMatrix(np.dot(self.Z, self.B_b.T))])
+        self.f = funcsfa.SFA()
 
     def testConvergenceFull(self):
         m = self.f.monitored_fit(self.data, self.n_factors, max_iter=50)
@@ -343,10 +343,10 @@ class TestFunctionalSparse(unittest.TestCase):
         Zvar = Zvar / np.mean(Zvar)
         self.Z = self.rand.normal(0, np.sqrt(Zvar),
                                   (self.n_samples, self.n_factors))
-        self.data = sfamd.StackedDataMatrix([
-            sfamd.DataMatrix(np.dot(self.Z, self.B_a.T)),
-            sfamd.DataMatrix(np.dot(self.Z, self.B_b.T))])
-        self.f = sfamd.SFA()
+        self.data = funcsfa.StackedDataMatrix([
+            funcsfa.DataMatrix(np.dot(self.Z, self.B_a.T)),
+            funcsfa.DataMatrix(np.dot(self.Z, self.B_b.T))])
+        self.f = funcsfa.SFA()
 
     def testConvergenceFull(self):
         m = self.f.monitored_fit(self.data, self.n_factors, max_iter=50)

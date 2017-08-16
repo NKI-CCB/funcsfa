@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from sfamd._sfamd import Factorization, np_size_t
+from funcsfa._lib import Factorization, np_size_t
 
 
 class TestTwoDataTypes(unittest.TestCase):
