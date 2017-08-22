@@ -7,7 +7,7 @@ from numpy.distutils.system_info import get_info
 
 setup(
     name='funcsfa',
-    version='1.0.dev17',
+    version='1.0.dev19',
     description='Functional Sparse Factor Analysis of Multiple Datatypes',
     author='Tycho Bismeijer',
     author_email='t.bismeijer@nki.nl',

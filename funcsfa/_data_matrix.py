@@ -141,3 +141,56 @@ class StackedDataMatrix(DataMatrix):
         return [slice(i_start, i_stop) for i_start, i_stop in
                 zip(chain([0], accumulate(feature_lengths)),
                     accumulate(feature_lengths))]
+
+    def to_netcdf(self, fn, feature_names=None, sample_dim='sample'):
+        import netCDF4
+
+        if feature_names is None:
+            feature_names = [f'{dt}_feature' for dt in self.dt_names]
+
+        with netCDF4.Dataset(fn, 'w') as ds:
+            ds.createDimension(sample_dim, len(self.samples))
+            samples_a = np.array(self.samples)
+            samples = ds.createVariable(sample_dim, samples_a.dtype,
+                                        sample_dim)
+            for i, s in enumerate(self.samples):
+                samples[i] = s
+
+            ds.setncattr_string('data_types', self.dt_names)
+            for dt_i, dt in enumerate(self.dt_names):
+                ds.createDimension(feature_names[dt_i],
+                                   self.dt_n_features[dt_i])
+                fvar_a = np.array(self.features[self.slices[dt_i]])
+                fvar = ds.createVariable(feature_names[dt_i], fvar_a.dtype,
+                                         feature_names[dt_i])
+                for i, v in enumerate(self.features[self.slices[dt_i]]):
+                    fvar[i] = v
+
+                var = ds.createVariable(dt, 'f8',
+                                        (sample_dim, feature_names[dt_i]))
+                var[:] = self.data[:, self.slices[dt_i]]
+
+                wvar = ds.createVariable(f'{dt}_weights', 'f8',
+                                         (sample_dim, feature_names[dt_i]))
+                wvar[:] = self.weights[:, self.slices[dt_i]]
+
+    @classmethod
+    def from_netcdf(cls, fn, sample_dim='sample'):
+        import netCDF4
+
+        with netCDF4.Dataset(fn, 'r') as ds:
+            dt_names = ds.getncattr('data_types')
+            samples = list(ds[sample_dim])
+            dms = dict()
+            for dt in dt_names:
+                assert(len(ds[dt].dimensions) == 2)
+                assert(ds[dt].dimensions[0] == sample_dim)
+                feature_dim = ds[dt].dimensions[1]
+                dms[dt] = DataMatrix(
+                    np.array(ds[dt]),
+                    samples,
+                    list(ds[feature_dim]),
+                    np.array(ds[f'{dt}_weights']),
+                )
+
+        return cls([dms[dt] for dt in dt_names], dt_names)
