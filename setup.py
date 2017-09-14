@@ -7,13 +7,13 @@ from numpy.distutils.system_info import get_info
 
 setup(
     name='funcsfa',
-    version='1.0.dev19',
+    version='1.0.dev22',
     description='Functional Sparse Factor Analysis of Multiple Datatypes',
     author='Tycho Bismeijer',
     author_email='t.bismeijer@nki.nl',
-    url='http://ccb.nki.nl/software/funcsfa/',
+    url='https://github.com/NKI-CCB/funcsfa',
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 3 - Beta',
         'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering :: Bio-Informatics',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',

@@ -5,10 +5,9 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#include <lapacke.h>
 #include <cblas.h>
 
-#include "sfamd.h"
+#include "funcsfa.h"
 
 #define min(x, y) ((x)>(y)?(y):(x))
 #define max(x, y) ((x)>(y)?(x):(y))
@@ -21,21 +20,71 @@
 double eps_ev = 1e-20;
 
 // **************************************
+// Lapack
+// **************************************
+
+// Lapack Fortran DGESV interface
+void
+dgesv_(int *n, int *nrhs, double *a, int *lda, int *ipiv, double *b, int *ldb,
+       int *info);
+// DGESV wrapper, for solving linear equations.
+static int
+dgesv(int n, int nrhs, double *a, int lda, int *ipiv, double *b, int ldb)
+{
+  int info = -1;
+  dgesv_(&n, &nrhs, a, &lda, ipiv, b, &ldb, &info);
+  return info;
+}
+
+// Lapack Fortran DGESVD interface
+void
+dgesvd_(char *jobu, char *jobvt, int *m, int *n, double *a, int *lda,
+        double *s, double *u, int *ldu, double *vt, int *ldvt, double *work,
+        int *lwork, int *info);
+// DGESVD wrapper, for Singular Value Decomposition.
+static int
+dgesvd(char jobu, char jobvt, int m, int n, double *a, int lda, double *s,
+       double *u, int ldu, double *vt, int ldvt)
+{
+  int info = -1;
+  int lwork = -1;
+  double optimal_lwork;
+  double *work;
+  // Query optimal work size
+  dgesvd_(&jobu, &jobvt, &m, &n, a, &lda,
+      s, u, &ldu, vt, &ldvt, &optimal_lwork,
+      &lwork, &info);
+  if (info != 0) {
+    return info;
+  }
+  lwork = (int) optimal_lwork;
+
+  work = malloc(sizeof(double)*lwork);
+
+  dgesvd_(&jobu, &jobvt, &m, &n, a, &lda,
+      s, u, &ldu, vt, &ldvt, work,
+      &lwork, &info);
+
+  free(work);
+  return info;
+}
+
+// **************************************
 // Objects
 // **************************************
 
-sfamd_Factorization*
-sfamd_Factorization_alloc(size_t n_features, size_t n_factors,
-                          size_t n_samples, size_t n_datatypes,
-                          size_t *n_features_split, double *data)
+funcsfa_Factorization*
+funcsfa_Factorization_alloc(size_t n_features, size_t n_factors,
+                            size_t n_samples, size_t n_datatypes,
+                            size_t *n_features_split, double *data)
 {
   size_t i;
-  sfamd_Factorization *m;
+  funcsfa_Factorization *m;
   size_t sum_n_features_split = 0;
 
   debug_print("%s\n", "Allocating SFA object");
 
-  m = malloc(sizeof(sfamd_Factorization));
+  m = malloc(sizeof(funcsfa_Factorization));
   m->n_features = n_features;
   m->n_factors = n_factors;
   m->n_samples = n_samples;
@@ -64,7 +113,7 @@ sfamd_Factorization_alloc(size_t n_features, size_t n_factors,
 }
 
 void
-sfamd_Factorization_free(sfamd_Factorization *m)
+funcsfa_Factorization_free(funcsfa_Factorization *m)
 {
   debug_print("%s\n", "Freeing SFA object");
 
@@ -79,15 +128,15 @@ sfamd_Factorization_free(sfamd_Factorization *m)
   free(m);
 }
 
-sfamd_Monitor*
-sfamd_Monitor_alloc(int max_iter)
+funcsfa_Monitor*
+funcsfa_Monitor_alloc(int max_iter)
 {
-  sfamd_Monitor *mon;
+  funcsfa_Monitor *mon;
   int i;
 
   debug_print("%s\n", "Allocating Monitor object");
 
-  mon = malloc(sizeof(sfamd_Monitor));
+  mon = malloc(sizeof(funcsfa_Monitor));
   if (mon == NULL) {
     return NULL;
   }
@@ -99,7 +148,7 @@ sfamd_Monitor_alloc(int max_iter)
       (mon->max_diff_factors == NULL) ||
       (mon->max_diff_coefficients == NULL))
   {
-    sfamd_Monitor_free(mon);
+    funcsfa_Monitor_free(mon);
     return NULL;
   }
   for (i = 0; i < max_iter+1; i++)
@@ -113,7 +162,7 @@ sfamd_Monitor_alloc(int max_iter)
 }
 
 void
-sfamd_Monitor_free(sfamd_Monitor *mon)
+funcsfa_Monitor_free(funcsfa_Monitor *mon)
 {
   debug_print("%s\n", "Freeing Monitor object");
 
@@ -155,7 +204,7 @@ typedef struct
 } Workspace;
 
 static Workspace*
-ws_alloc(sfamd_Factorization *m)
+ws_alloc(funcsfa_Factorization *m)
 {
   Workspace *ws;
 
@@ -179,7 +228,7 @@ ws_alloc(sfamd_Factorization *m)
 }
 
 static void
-ws_init(Workspace *ws, sfamd_Factorization *m)
+ws_init(Workspace *ws, funcsfa_Factorization *m)
 {
   double *d_d;
   size_t dt_i, feature_start, n_features, i;
@@ -295,13 +344,13 @@ positive_array(double *a, size_t length)
 // **************************************
 
 static int
-expectation_factors(sfamd_Factorization *m, Workspace *ws)
+expectation_factors(funcsfa_Factorization *m, Workspace *ws)
 {
   size_t i, j;
   double *r_c, *c_r_c, *c_r_c_i, *o, *c_o;
   double factor_mean, factor_var, factor_sd, deviance;
   int *ipiv;
-  lapack_int info;
+  int info;
 
   debug_print("%s\n", "Computing Expectation and Covariance of Factors");
   check_finite(m->coefficients, m->n_features*m->n_factors);
@@ -345,7 +394,7 @@ expectation_factors(sfamd_Factorization *m, Workspace *ws)
     }
   }
 
-  info = LAPACKE_dgesv(LAPACK_COL_MAJOR, m->n_factors, m->n_factors,
+  info = dgesv(m->n_factors, m->n_factors,
       c_r_c, m->n_factors, ipiv,
       c_r_c_i, m->n_factors);
   if (info != 0) {
@@ -432,7 +481,7 @@ expectation_factors(sfamd_Factorization *m, Workspace *ws)
 }
 
 static int
-maximize(sfamd_Factorization *m, double *lambdas, Workspace *ws)
+maximize(funcsfa_Factorization *m, double *lambdas, Workspace *ws)
 {
   const size_t n_lambda = 2;
   size_t dt_i, f_i, lambda_i, k;
@@ -527,11 +576,11 @@ maximize(sfamd_Factorization *m, double *lambdas, Workspace *ws)
 }
 
 static int
-init_svd(sfamd_Factorization *m, Workspace *ws)
+init_svd(funcsfa_Factorization *m, Workspace *ws)
 {
-  lapack_int info;
+  int info;
   size_t i, j;
-  double *x, *s, *superb, *vt, *u;
+  double *x, *s, *vt, *u;
   double scale, f, explained_var, data_var;
   size_t total_n_factors;
 
@@ -541,16 +590,14 @@ init_svd(sfamd_Factorization *m, Workspace *ws)
 
   x = malloc(sizeof(double) * m->n_features * m->n_samples);
   s = malloc(sizeof(double) * total_n_factors);
-  superb = malloc(sizeof(double) * (total_n_factors-1));
   vt = malloc(sizeof(double) * total_n_factors * m->n_features);
   u = malloc(sizeof(double) * total_n_factors * m->n_samples);
-  if (x == NULL || s == NULL || superb == NULL || vt == NULL)
+  if (x == NULL || s == NULL || vt == NULL)
   {
     free(x);
     free(vt);
     free(s);
     free(u);
-    free(superb);
     return -1;
   }
 
@@ -561,18 +608,17 @@ init_svd(sfamd_Factorization *m, Workspace *ws)
 
   /* vt = svd(X).V.t */
   debug_print("%s\n", "\tStarting Lapack SVD");
-  info = LAPACKE_dgesvd(LAPACK_COL_MAJOR, 'S', 'S',
+  info = dgesvd('S', 'S',
       m->n_samples, m->n_features,
       x, m->n_samples,
       s, u, m->n_samples,
-      vt, total_n_factors, superb);
+      vt, total_n_factors);
   if (info != 0) {
     debug_print("Lapack error: %d\n", info);
     free(x);
     free(vt);
     free(u);
     free(s);
-    free(superb);
     return -1;
   }
   debug_print("%s\n", "\tDone Lapack SVD");
@@ -628,12 +674,11 @@ init_svd(sfamd_Factorization *m, Workspace *ws)
   free(vt);
   free(u);
   free(s);
-  free(superb);
   return 0;
 }
 
 double
-calc_reconstruction_error(sfamd_Factorization *m, Workspace *ws)
+calc_reconstruction_error(funcsfa_Factorization *m, Workspace *ws)
 {
   int i, j;
   double error, e;
@@ -658,8 +703,8 @@ calc_reconstruction_error(sfamd_Factorization *m, Workspace *ws)
 }
 
 int
-sfamd(sfamd_Factorization *m, double eps, int max_iter,
-      char regularizations[], double *lambdas, sfamd_Monitor *mon)
+funcsfa(funcsfa_Factorization *m, double eps, int max_iter,
+        char regularizations[], double *lambdas, funcsfa_Monitor *mon)
 {
   int iter = 0;
   int err = 0;

@@ -1,10 +1,10 @@
-/** \file sfamd.h
+/** \file funcsfa.h
  * Sparse Factor Analysis in C.
  *
  */
 #include <stdlib.h>
 
-extern const char *sfamd_version;
+extern const char *funcsfa_version;
 
 /** Data and its factorization.
  *
@@ -32,23 +32,23 @@ typedef struct
   double *factor_cov;
   /** Residuals of factorization (n_features) */
   double *residual_var;
-} sfamd_Factorization;
+} funcsfa_Factorization;
 
-/** Allocate a factorization, do not forget to call sfamd_Factorization_free() later
+/** Allocate a factorization, do not forget to call funcsfa_Factorization_free() later
  * to free allocated memory
  *
  * @memberof Factorization
  */
-sfamd_Factorization*
-sfamd_Factorization_alloc(size_t n_features, size_t n_factors, size_t n_samples,
+funcsfa_Factorization*
+funcsfa_Factorization_alloc(size_t n_features, size_t n_factors, size_t n_samples,
                         size_t n_datatypes, size_t *n_features_split,
                         double *data);
-/** Free a facotorization previously allocated with sfamd_Factorization_alloc()
+/** Free a facotorization previously allocated with funcsfa_Factorization_alloc()
  *
  * @memberof Factorization
  */
 void
-sfamd_Factorization_free(sfamd_Factorization *m);
+funcsfa_Factorization_free(funcsfa_Factorization *m);
 
 typedef struct
 {
@@ -62,22 +62,22 @@ typedef struct
   /** Max elementwise difference of coefficients between this and last
    * iteration (n_iter+1) */
   double *max_diff_coefficients;
-} sfamd_Monitor;
+} funcsfa_Monitor;
 
-/** Allocate a monitor, do not forget to call sfamd_Monitor_free() later
+/** Allocate a monitor, do not forget to call funcsfa_Monitor_free() later
  * to free allocated memory
  *
  * @memberof Monitor
  */
-sfamd_Monitor*
-sfamd_Monitor_alloc(int max_iter);
+funcsfa_Monitor*
+funcsfa_Monitor_alloc(int max_iter);
 
-/** Free a monitor previously allocated with sfamd_Monitor_alloc()
+/** Free a monitor previously allocated with funcsfa_Monitor_alloc()
  *
  * @memberof Monitor
  */
 void
-sfamd_Monitor_free(sfamd_Monitor *mon);
+funcsfa_Monitor_free(funcsfa_Monitor *mon);
 
 /** Sparse factor analysis of multiple datatypes
  *
@@ -95,6 +95,6 @@ sfamd_Monitor_free(sfamd_Monitor *mon);
  * @return      0 on succes, non-zero on error.
  */
 int
-sfamd(sfamd_Factorization *m, double eps, int max_iter,
+funcsfa(funcsfa_Factorization *m, double eps, int max_iter,
       char regularizations[],
-      double *lambdas, sfamd_Monitor *mon);
+      double *lambdas, funcsfa_Monitor *mon);
