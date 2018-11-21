@@ -7,7 +7,7 @@ from numpy.distutils.system_info import get_info
 
 setup(
     name='funcsfa',
-    version='1.0.dev22',
+    version='1.0.dev23',
     description='Functional Sparse Factor Analysis of Multiple Datatypes',
     author='Tycho Bismeijer',
     author_email='t.bismeijer@nki.nl',
@@ -18,12 +18,11 @@ setup(
         'Topic :: Scientific/Engineering :: Bio-Informatics',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
         'License :: Other/Proprietary License',
-        'Programming Language :: Python :: 3.5'
+        'Programming Language :: Python :: 3.6'
     ],
     ext_modules=[Extension(
         'funcsfa._lib',
-        ['funcsfa/_lib.pyx', 'funcsfa-c/src/funcsfa.c',
-         'funcsfa-c/build/version.c'],
+        ['funcsfa/_lib.pyx', 'funcsfa-c/src/funcsfa.c'],
         libraries=(get_info('blas_opt')['libraries'] +
                    get_info('lapack_opt')['libraries'] +
                    ['m']),

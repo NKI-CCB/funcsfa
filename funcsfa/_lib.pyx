@@ -9,8 +9,6 @@ from funcsfa cimport funcsfa_c
 
 np_size_t = np.dtype('u' + str(sizeof(size_t)))
 
-c_version = funcsfa_c.funcsfa_version.decode()
-
 cdef class Factorization:
 
     cdef funcsfa_c.funcsfa_Factorization* f
@@ -85,6 +83,7 @@ cdef class Factorization:
     def sfa(self, double eps, int max_iter, double[::1] lambdas,
               int do_monitor=False):
         cdef int n_iter = 0
+        cdef int ret = 0
         cdef double diff = 0
         cdef funcsfa_c.funcsfa_Monitor *mon
         cdef Monitor monitor

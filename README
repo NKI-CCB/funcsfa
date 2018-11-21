@@ -1,2 +1,2 @@
-Python wrapper for sparse factor analysis of multiple datatypes (sfamd). Install
+Python wrapper for functional sparse-factor analysis (sfamd). Install
 as a python package with `pip` or `python setup.py`.

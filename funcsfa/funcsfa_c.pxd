@@ -1,7 +1,5 @@
 cdef extern from "funcsfa.h":
 
-    const char *funcsfa_version;
-
     ctypedef struct funcsfa_Factorization:
         size_t n_features
         size_t n_factors
