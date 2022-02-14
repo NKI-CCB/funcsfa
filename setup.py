@@ -18,7 +18,7 @@ setup(
         'Topic :: Scientific/Engineering :: Bio-Informatics',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
         'License :: Other/Proprietary License',
-        'Programming Language :: Python :: 3.6'
+        'Programming Language :: Python :: 3.8'
     ],
     ext_modules=[Extension(
         'funcsfa._lib',
